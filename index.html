@@ -5,79 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Image Viewer</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            margin: 20px; 
-            user-select: none; /* Prevent text/image selection */
-        }
-        input { 
-            padding: 10px; 
-            font-size: 16px; 
-            width: 200px; 
-        }
-        canvas { 
-            max-width: 100%; 
-            height: auto; 
-            margin-top: 20px; 
-            border: 1px solid #ccc; 
-            pointer-events: none; /* Disable interactions */
-        }
-        #error { 
-            color: red; 
-            margin-top: 10px; 
-        }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input { padding: 10px; font-size: 16px; width: 200px; }
+        img { max-width: 100%; height: auto; margin-top: 20px; border: 1px solid #ccc; }
+        #error { color: red; margin-top: 10px; }
     </style>
 </head>
 <body>
     <h1>Enter Student ID</h1>
     <input type="text" id="studentId" placeholder="e.g., 22951a3350" oninput="updateImage()">
     <div id="imageContainer">
-        <canvas id="studentImage"></canvas>
+        <img id="studentImage" src="" alt="Student Image" onerror="showError()">
     </div>
-    <p id="error" style="display: none;">Image not found. Check the ID or CORS settings.</p>
+    <p id="error" style="display: none;">Image not found. Check the ID and try again.</p>
 
     <script>
-        // Prevent right-click on entire page
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        // Prevent dragging
-        document.addEventListener('dragstart', (e) => e.preventDefault());
-
         function updateImage() {
             const input = document.getElementById('studentId').value.trim();
-            const canvas = document.getElementById('studentImage');
-            const ctx = canvas.getContext('2d');
-
-            // Clear canvas if input is empty
             if (!input) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('studentImage').src = '';
                 hideError();
                 return;
             }
-
-            // Uppercase the ID to match example (adjust if case-sensitive)
+            
+            // Uppercase the 'a' to match your example (adjust if IDs are case-sensitive)
             const id = input.toUpperCase();
+            
+            // Build the URL
             const url = `https://iare-data.s3.ap-south-1.amazonaws.com/uploads/STUDENTS/${id}/${id}.jpg`;
-            console.log('Generated URL:', url); // Debug: Check console for URL
-
-            // Load image and draw on canvas
-            const img = new Image();
-            img.crossOrigin = "Anonymous"; // Handle CORS
-            img.onload = () => {
-                console.log('Image loaded successfully'); // Debug: Success log
-                // Set canvas size to match image
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                hideError();
-            };
-            img.onerror = () => {
-                console.error('Image load failed (check ID or CORS settings)'); // Debug: Error log
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                showError();
-            };
-            img.src = url; // Fetch image
+            
+            // Set the image source
+            document.getElementById('studentImage').src = url;
+            hideError();
         }
 
         function showError() {
