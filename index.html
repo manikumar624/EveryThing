@@ -35,7 +35,7 @@
     <div id="imageContainer">
         <canvas id="studentImage"></canvas>
     </div>
-    <p id="error" style="display: none;">Image not found. Check the ID and try again.</p>
+    <p id="error" style="display: none;">Image not found. Check the ID or CORS settings.</p>
 
     <script>
         // Prevent right-click on entire page
@@ -59,11 +59,13 @@
             // Uppercase the ID to match example (adjust if case-sensitive)
             const id = input.toUpperCase();
             const url = `https://iare-data.s3.ap-south-1.amazonaws.com/uploads/STUDENTS/${id}/${id}.jpg`;
+            console.log('Generated URL:', url); // Debug: Check console for URL
 
             // Load image and draw on canvas
             const img = new Image();
-            img.crossOrigin = "Anonymous"; // Handle CORS if needed
+            img.crossOrigin = "Anonymous"; // Handle CORS
             img.onload = () => {
+                console.log('Image loaded successfully'); // Debug: Success log
                 // Set canvas size to match image
                 canvas.width = img.width;
                 canvas.height = img.height;
@@ -71,6 +73,7 @@
                 hideError();
             };
             img.onerror = () => {
+                console.error('Image load failed (check ID or CORS settings)'); // Debug: Error log
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 showError();
             };
