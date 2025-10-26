@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Image Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input { padding: 10px; font-size: 16px; width: 200px; }
+        img { max-width: 100%; height: auto; margin-top: 20px; border: 1px solid #ccc; }
+        #error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Enter Student ID</h1>
+    <input type="text" id="studentId" placeholder="e.g., 22951a3350" oninput="updateImage()">
+    <div id="imageContainer">
+        <img id="studentImage" src="" alt="Student Image" onerror="showError()">
+    </div>
+    <p id="error" style="display: none;">Image not found. Check the ID and try again.</p>
+
+    <script>
+        function updateImage() {
+            const input = document.getElementById('studentId').value.trim();
+            if (!input) {
+                document.getElementById('studentImage').src = '';
+                hideError();
+                return;
+            }
+            
+            // Uppercase the 'a' to match your example (adjust if IDs are case-sensitive)
+            const id = input.toUpperCase();
+            
+            // Build the URL
+            const url = `https://iare-data.s3.ap-south-1.amazonaws.com/uploads/STUDENTS/${id}/${id}.jpg`;
+            
+            // Set the image source
+            document.getElementById('studentImage').src = url;
+            hideError();
+        }
+
+        function showError() {
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
