@@ -6,7 +6,7 @@
     <title>Student Image Viewer</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-        input { padding: 10px; font-size: 16px; width: 200px; }
+        input { padding: 10px; font-size: 16px; width: 250px; }
         img { max-width: 100%; height: auto; margin-top: 20px; border: 1px solid #ccc; }
         #error { color: red; margin-top: 10px; }
     </style>
@@ -21,20 +21,19 @@
 
     <script>
         function updateImage() {
-            const input = document.getElementById('studentId').value.trim();
+            const inputEl = document.getElementById('studentId');
+            const input = inputEl.value.trim();
+
             if (!input) {
                 document.getElementById('studentImage').src = '';
                 hideError();
                 return;
             }
-            
-            // Uppercase the 'a' to match your example (adjust if IDs are case-sensitive)
-            const id = input.toUpperCase();
-            
-            // Build the URL
+
+            const id = input.toUpperCase(); // keep everything uppercase for URL
+            inputEl.value = id;             // reflect uppercase in the input
+
             const url = `https://iare-data.s3.ap-south-1.amazonaws.com/uploads/STUDENTS/${id}/${id}.jpg`;
-            
-            // Set the image source
             document.getElementById('studentImage').src = url;
             hideError();
         }
@@ -46,6 +45,74 @@
         function hideError() {
             document.getElementById('error').style.display = 'none';
         }
+
+        // ---- NEW PART: handle ArrowDown / ArrowRight to go to next roll no ----
+        function getNextSuffix(suffix) {
+            // suffix is expected to be 2 characters
+            if (suffix.length !== 2) return suffix;
+
+            const [c1, c2] = suffix;
+            const isDigit = ch => ch >= '0' && ch <= '9';
+            const isLetter = ch => ch >= 'A' && ch <= 'Z';
+
+            // Case 1: 00 - 99 (both digits)
+            if (isDigit(c1) && isDigit(c2)) {
+                const num = parseInt(suffix, 10);
+                if (num < 99) {
+                    const nextNum = num + 1;
+                    return nextNum.toString().padStart(2, '0'); // 09, 10, etc.
+                } else {
+                    // 99 -> A0
+                    return 'A0';
+                }
+            }
+
+            // Case 2: A0 - Z9 (letter + digit)
+            if (isLetter(c1) && isDigit(c2)) {
+                const digit = parseInt(c2, 10);
+
+                if (digit < 9) {
+                    // A0 -> A1 ... A8 -> A9
+                    return c1 + (digit + 1).toString();
+                } else {
+                    // A9 -> B0, B9 -> C0, etc.
+                    if (c1 < 'Z') {
+                        const nextLetter = String.fromCharCode(c1.charCodeAt(0) + 1);
+                        return nextLetter + '0';
+                    } else {
+                        // Z9 -> wrap if you want (here I wrap to 00)
+                        return '00';
+                    }
+                }
+            }
+
+            // If format is unexpected, just return it unchanged
+            return suffix;
+        }
+
+        function goToNextRoll() {
+            const inputEl = document.getElementById('studentId');
+            let id = inputEl.value.trim().toUpperCase();
+
+            if (id.length < 2) return; // not enough length to modify last 2 chars
+
+            const prefix = id.slice(0, -2);
+            const suffix = id.slice(-2); // last 2 chars
+
+            const nextSuffix = getNextSuffix(suffix);
+            const nextId = prefix + nextSuffix;
+
+            inputEl.value = nextId;
+            updateImage();
+        }
+
+        // Listen for ArrowDown and ArrowRight on the input
+        document.getElementById('studentId').addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault(); // stop cursor movement
+                goToNextRoll();
+            }
+        });
     </script>
 </body>
 </html>
