@@ -1,105 +1,313 @@
-<script>
-    function updateImage() {
-        const inputEl = document.getElementById('studentId');
-        const input = inputEl.value.trim();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Image Viewer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-        if (!input) {
-            document.getElementById('studentImage').src = '';
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #1d2671, #c33764);
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            margin: auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 18px;
+            padding: 24px 22px 20px;
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(4px);
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0 0 4px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .field-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #studentId {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 15px;
+            border-radius: 10px;
+            border: 1px solid #d0d0d0;
+            outline: none;
+            transition: all 0.18s ease;
+            letter-spacing: 0.5px;
+        }
+
+        #studentId:focus {
+            border-color: #4a63e7;
+            box-shadow: 0 0 0 2px rgba(74, 99, 231, 0.2);
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .shortcut-text {
+            font-size: 11px;
+            color: #777;
+        }
+
+        .btn {
+            border: none;
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            cursor: pointer;
+            background: #4a63e7;
+            color: #fff;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #3a52d0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .image-wrapper {
+            margin-top: 6px;
+            border-radius: 16px;
+            border: 1px dashed #d0d0d0;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        #studentImage {
+            width: 100%;
+            max-height: 360px;
+            object-fit: contain;
+            border-radius: 12px;
+            display: block;
+        }
+
+        #error {
+            color: #d63333;
+            margin-top: 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="card">
+            <h1>Student Image Viewer</h1>
+            <p class="subtitle">Enter a roll number to fetch the student image from S3.</p>
+
+            <div class="field-group">
+                <label for="studentId">Student Roll Number</label>
+                <input
+                    type="text"
+                    id="studentId"
+                    placeholder="e.g., 22951A3350"
+                    autocomplete="off"
+                    spellcheck="false"
+                    oninput="updateImage()"
+                >
+                <p class="hint">
+                    Tip: Use <b>↑ ↓ ← →</b> to move between roll numbers.
+                </p>
+            </div>
+
+            <div class="controls">
+                <span class="shortcut-text">Prev: ↑ or ← &nbsp; | &nbsp; Next: ↓ or →</span>
+                <div class="buttons">
+                    <button class="btn" type="button" onclick="goToPreviousRoll()">
+                        ← Back Roll
+                    </button>
+                    <button class="btn" type="button" onclick="goToNextRoll()">
+                        Next Roll →
+                    </button>
+                </div>
+            </div>
+
+            <div class="image-wrapper">
+                <img id="studentImage" src="" alt="Student Image" onerror="showError()" onload="hideError()">
+            </div>
+            <p id="error" style="display: none;">Image not found. Check the ID and try again.</p>
+        </div>
+    </div>
+
+    <script>
+        function updateImage() {
+            const inputEl = document.getElementById('studentId');
+            const input = inputEl.value.trim();
+
+            if (!input) {
+                document.getElementById('studentImage').src = '';
+                hideError();
+                return;
+            }
+
+            const id = input.toUpperCase();
+            inputEl.value = id;
+
+            const url = `https://iare-data.s3.ap-south-1.amazonaws.com/uploads/STUDENTS/${id}/${id}.jpg`;
+            document.getElementById('studentImage').src = url;
             hideError();
-            return;
         }
 
-        const id = input.toUpperCase();
-        inputEl.value = id;
-
-        const url = `https://iare-data.s3.ap-south-1.amazonaws.com/uploads/STUDENTS/${id}/${id}.jpg`;
-        document.getElementById('studentImage').src = url;
-        hideError();
-    }
-
-    function showError() {
-        document.getElementById('error').style.display = 'block';
-    }
-
-    function hideError() {
-        document.getElementById('error').style.display = 'none';
-    }
-
-    // -------- NEXT number logic --------
-    function getNextSuffix(suffix) {
-        const [c1, c2] = suffix;
-        const isDigit = ch => ch >= '0' && ch <= '9';
-        const isLetter = ch => ch >= 'A' && ch <= 'Z';
-
-        if (isDigit(c1) && isDigit(c2)) {
-            const num = parseInt(suffix, 10);
-            return num < 99 ? String(num + 1).padStart(2, "0") : "A0";
+        function showError() {
+            document.getElementById('error').style.display = 'block';
         }
 
-        if (isLetter(c1) && isDigit(c2)) {
-            if (c2 < '9') return c1 + (parseInt(c2) + 1);
-            return c1 < 'Z'
-                ? String.fromCharCode(c1.charCodeAt(0) + 1) + "0"
-                : "00";
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
         }
 
-        return suffix;
-    }
+        // -------- NEXT number logic --------
+        function getNextSuffix(suffix) {
+            if (suffix.length !== 2) return suffix;
 
-    // -------- PREVIOUS number logic --------
-    function getPreviousSuffix(suffix) {
-        const [c1, c2] = suffix;
-        const isDigit = ch => ch >= '0' && ch <= '9';
-        const isLetter = ch => ch >= 'A' && ch <= 'Z';
+            const [c1, c2] = suffix;
+            const isDigit = ch => ch >= '0' && ch <= '9';
+            const isLetter = ch => ch >= 'A' && ch <= 'Z';
 
-        if (isDigit(c1) && isDigit(c2)) {
-            const num = parseInt(suffix, 10);
-            return num > 0 ? String(num - 1).padStart(2, "0") : "Z9";
+            // 00–99
+            if (isDigit(c1) && isDigit(c2)) {
+                const num = parseInt(suffix, 10);
+                return num < 99 ? String(num + 1).padStart(2, "0") : "A0";
+            }
+
+            // A0–Z9
+            if (isLetter(c1) && isDigit(c2)) {
+                if (c2 < '9') return c1 + (parseInt(c2) + 1);
+                return c1 < 'Z'
+                    ? String.fromCharCode(c1.charCodeAt(0) + 1) + "0"
+                    : "00"; // Z9 → 00
+            }
+
+            return suffix;
         }
 
-        if (isLetter(c1) && isDigit(c2)) {
-            if (c2 > '0') return c1 + (parseInt(c2) - 1);
-            return c1 > 'A'
-                ? String.fromCharCode(c1.charCodeAt(0) - 1) + "9"
-                : "99";
+        // -------- PREVIOUS number logic --------
+        function getPreviousSuffix(suffix) {
+            if (suffix.length !== 2) return suffix;
+
+            const [c1, c2] = suffix;
+            const isDigit = ch => ch >= '0' && ch <= '9';
+            const isLetter = ch => ch >= 'A' && ch <= 'Z';
+
+            // 00–99
+            if (isDigit(c1) && isDigit(c2)) {
+                const num = parseInt(suffix, 10);
+                return num > 0 ? String(num - 1).padStart(2, "0") : "Z9"; // 00 → Z9
+            }
+
+            // A0–Z9
+            if (isLetter(c1) && isDigit(c2)) {
+                if (c2 > '0') return c1 + (parseInt(c2) - 1);
+                return c1 > 'A'
+                    ? String.fromCharCode(c1.charCodeAt(0) - 1) + "9" // B0 → A9
+                    : "99"; // A0 → 99
+            }
+
+            return suffix;
         }
 
-        return suffix;
-    }
+        function goToNextRoll() {
+            const inputEl = document.getElementById('studentId');
+            let id = inputEl.value.trim().toUpperCase();
+            if (id.length < 2) return;
 
-    function goToNextRoll() {
-        const inputEl = document.getElementById('studentId');
-        let id = inputEl.value.trim().toUpperCase();
-        if (id.length < 2) return;
+            const prefix = id.slice(0, -2);
+            const suffix = id.slice(-2);
 
-        const prefix = id.slice(0, -2);
-        const suffix = id.slice(-2);
-
-        inputEl.value = prefix + getNextSuffix(suffix);
-        updateImage();
-    }
-
-    function goToPreviousRoll() {
-        const inputEl = document.getElementById('studentId');
-        let id = inputEl.value.trim().toUpperCase();
-        if (id.length < 2) return;
-
-        const prefix = id.slice(0, -2);
-        const suffix = id.slice(-2);
-
-        inputEl.value = prefix + getPreviousSuffix(suffix);
-        updateImage();
-    }
-
-    // Keyboard navigation
-    document.getElementById('studentId').addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-            e.preventDefault();
-            goToNextRoll();
+            inputEl.value = prefix + getNextSuffix(suffix);
+            updateImage();
         }
-        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-            e.preventDefault();
-            goToPreviousRoll();
+
+        function goToPreviousRoll() {
+            const inputEl = document.getElementById('studentId');
+            let id = inputEl.value.trim().toUpperCase();
+            if (id.length < 2) return;
+
+            const prefix = id.slice(0, -2);
+            const suffix = id.slice(-2);
+
+            inputEl.value = prefix + getPreviousSuffix(suffix);
+            updateImage();
         }
-    });
-</script>
+
+        // Keyboard navigation
+        document.getElementById('studentId').addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                goToNextRoll();
+            }
+            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToPreviousRoll();
+            }
+        });
+    </script>
+</body>
+</html>
